@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simple Note App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #noteInput {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    #addNoteButton {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #addNoteButton:hover {
+      background-color: #45a049;
+    }
+    #notesList {
+      margin-top: 20px;
+      list-style-type: none;
+      padding: 0;
+    }
+    .noteItem {
+      background-color: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: relative;
+      word-wrap: break-word;
+    }
+    .deleteButton {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #e74c3c;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background-color 0.3s ease;
+    }
+    .deleteButton:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <h1>Simple Note App</h1>
+  <textarea id="noteInput" placeholder="Write your note here..."></textarea>
+  <button id="addNoteButton">Add Note</button>
+  <ul id="notesList"></ul>
+
+  <script>
+    const noteInput = document.getElementById('noteInput');
+    const addNoteButton = document.getElementById('addNoteButton');
+    const notesList = document.getElementById('notesList');
+
+    
+    let notes = JSON.parse(localStorage.getItem('notes')) || [];
+
+    function saveNotes() {
+      localStorage.setItem('notes', JSON.stringify(notes));
+    }
+
+    function renderNotes() {
+      notesList.innerHTML = '';
+      notes.forEach((note, index) => {
+        const li = document.createElement('li');
+        li.className = 'noteItem';
+        li.textContent = note;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'deleteButton';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.addEventListener('click', () => {
+          notes.splice(index, 1);
+          saveNotes();
+          renderNotes();
+        });
+
+        li.appendChild(deleteBtn);
+        notesList.appendChild(li);
+      });
+    }
+
+    addNoteButton.addEventListener('click', () => {
+      const noteText = noteInput.value.trim();
+      if (noteText) {
+        notes.push(noteText);
+        saveNotes();
+        renderNotes();
+        noteInput.value = '';
+      }
+    });
+
+    
+    renderNotes();
+  </script>
+</body>
+</html>
