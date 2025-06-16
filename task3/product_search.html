@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Product Search</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #d4deb4;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #searchForm {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    #searchInput {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #d12828;
+      border-radius: 5px 0 0 5px;
+      outline: none;
+    }
+    #searchButton {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 0 5px 5px 0;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #searchButton:hover {
+      background-color: #45a049;
+    }
+    #productList {
+      list-style-type: none;
+      padding: 0;
+    }
+    .productItem {
+      background-color: rgb(108, 207, 192);
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      word-wrap: break-word;
+    }
+    #errorMessage {
+      color: rgb(137, 203, 200);
+      margin-bottom: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Product Search</h1>
+  <form id="searchForm">
+    <input type="text" id="searchInput" placeholder="Search products by name..." />
+    <button type="submit" id="searchButton">Search</button>
+  </form>
+  <div id="errorMessage">Search field cannot be empty.</div>
+  <ul id="productList"></ul>
+
+  <script>
+    const products = [
+      "Apple iPhone 14",
+      "Samsung Galaxy S22",
+      "Google Pixel 7",
+      "OnePlus 10 Pro",
+      "Sony WH-1000XM4 Headphones",
+      "Apple MacBook Pro",
+      "Dell XPS 13",
+      "Amazon Echo Dot",
+      "Nintendo Switch",
+      "Fitbit Charge 5",
+        "Samsung Galaxy Tab S8",
+        "Apple iPad Air",
+        "MI Xiaomi Mi 11",
+        "REALME GT 2 Pro"
+    ];
+
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const productList = document.getElementById('productList');
+    const errorMessage = document.getElementById('errorMessage');
+
+    function renderProducts(filteredProducts) {
+      productList.innerHTML = '';
+      if (filteredProducts.length === 0) {
+        productList.innerHTML = '<li class="productItem">No products found.</li>';
+        return;
+      }
+      filteredProducts.forEach(product => {
+        const li = document.createElement('li');
+        li.className = 'productItem';
+        li.textContent = product;
+        productList.appendChild(li);
+      });
+    }
+
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const query = searchInput.value.trim();
+      if (query === '') {
+        errorMessage.style.display = 'block';
+        return;
+      }
+      errorMessage.style.display = 'none';
+      const filtered = products.filter(product =>
+        product.toLowerCase().includes(query.toLowerCase())
+      );
+      renderProducts(filtered);
+    });
+
+    
+    renderProducts(products);
+  </script>
+</body>
+</html>
