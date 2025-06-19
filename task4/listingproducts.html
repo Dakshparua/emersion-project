@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Product Search (DummyJSON)</title>
+  <title>Product Search</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -45,17 +45,25 @@
       background-color: #45a049;
     }
 
+    #filterSection {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    #filterSection select,
+    #filterSection input,
+    #filterSection button {
+      padding: 10px;
+      font-size: 16px;
+    }
+
     #sortSelect {
       padding: 10px;
       font-size: 16px;
       margin-bottom: 20px;
       width: 100%;
-    }
-
-    #errorMessage {
-      color: red;
-      margin-bottom: 10px;
-      display: none;
     }
 
     #productList {
@@ -67,6 +75,7 @@
     }
 
     .productItem {
+      position: relative;
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -109,23 +118,46 @@
       font-weight: bold;
       margin-top: 10px;
     }
+
+    .proBadge {
+      position: absolute;
+      background-color: gold;
+      color: black;
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 0 0 0 10px;
+      top: 0;
+      right: 0;
+      font-size: 12px;
+      z-index: 1;
+    }
   </style>
 </head>
 <body>
   <h1>Product Search</h1>
 
+  <!-- Search -->
   <form id="searchForm">
     <input type="text" id="searchInput" placeholder="Search products by name..." />
     <button type="submit" id="searchButton">Search</button>
   </form>
 
+  <!-- Filter Section -->
+  <div id="filterSection">
+    <select id="brandSelect">
+      <option value="all">All Brands</option>
+    </select>
+    <input type="number" id="minPrice" placeholder="Min Price" />
+    <input type="number" id="maxPrice" placeholder="Max Price" />
+    <button id="filterButton">Filter</button>
+  </div>
+
+  <!-- Sort Section -->
   <select id="sortSelect">
     <option value="default">Sort by Price</option>
     <option value="asc">Price: Low to High</option>
     <option value="desc">Price: High to Low</option>
   </select>
-
-  <div id="errorMessage">Search field cannot be empty.</div>
 
   <ul id="productList"></ul>
 
@@ -133,8 +165,11 @@
     const searchForm = document.getElementById('searchForm');
     const searchInput = document.getElementById('searchInput');
     const productList = document.getElementById('productList');
-    const errorMessage = document.getElementById('errorMessage');
     const sortSelect = document.getElementById('sortSelect');
+    const brandSelect = document.getElementById('brandSelect');
+    const minPriceInput = document.getElementById('minPrice');
+    const maxPriceInput = document.getElementById('maxPrice');
+    const filterButton = document.getElementById('filterButton');
 
     let allProducts = [];
     let currentFiltered = [];
@@ -145,25 +180,22 @@
         const data = await res.json();
         allProducts = data.products;
         currentFiltered = [...allProducts];
+        populateBrandOptions(allProducts);
         renderProducts(currentFiltered);
       } catch (err) {
-        console.error("API fetch failed", err);
-        errorMessage.textContent = "Failed to load products.";
-        errorMessage.style.display = "block";
+        alert("Failed to load products.");
       }
     }
 
     function renderProducts(products) {
       productList.innerHTML = '';
-      if (products.length === 0) {
-        productList.innerHTML = '<li class="productItem">No products found.</li>';
-        return;
-      }
-
       products.forEach(product => {
         const li = document.createElement('li');
         li.className = 'productItem';
+        const isPro = product.rating >= 4.5;
+
         li.innerHTML = `
+          ${isPro ? '<div class="proBadge">PRO</div>' : ''}
           <img src="${product.thumbnail}" alt="${product.title}" />
           <div class="productDetails">
             <h3>${product.title}</h3>
@@ -175,36 +207,72 @@
       });
     }
 
+    function populateBrandOptions(products) {
+      const brands = [...new Set(products.map(p => p.brand))];
+      brands.forEach(brand => {
+        const option = document.createElement('option');
+        option.value = brand;
+        option.textContent = brand;
+        brandSelect.appendChild(option);
+      });
+    }
+
     searchForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const query = searchInput.value.trim();
-      if (!query) {
-        errorMessage.textContent = "Search field cannot be empty.";
-        errorMessage.style.display = "block";
-        return;
-      }
-      errorMessage.style.display = "none";
+      const query = searchInput.value.trim().toLowerCase();
       currentFiltered = allProducts.filter(product =>
-        product.title.toLowerCase().includes(query.toLowerCase())
+        product.title.toLowerCase().includes(query)
       );
-      applySorting();
+      applyFiltersAndSort();
+    });
+
+    filterButton.addEventListener('click', () => {
+      applyFiltersAndSort();
     });
 
     sortSelect.addEventListener('change', () => {
-      applySorting();
+      applyFiltersAndSort();
     });
 
-    function applySorting() {
-      const sortValue = sortSelect.value;
-      let sorted = [...currentFiltered];
+    function applyFiltersAndSort() {
+      const brand = brandSelect.value;
+      const minPrice = parseFloat(minPriceInput.value);
+      const maxPrice = parseFloat(maxPriceInput.value);
+      const sortOrder = sortSelect.value;
 
-      if (sortValue === 'asc') {
-        sorted.sort((a, b) => a.price - b.price);
-      } else if (sortValue === 'desc') {
-        sorted.sort((a, b) => b.price - a.price);
+      let filtered = allProducts;
+
+      // Apply search filter (if already applied)
+      const searchQuery = searchInput.value.trim().toLowerCase();
+      if (searchQuery) {
+        filtered = filtered.filter(p =>
+          p.title.toLowerCase().includes(searchQuery)
+        );
       }
 
-      renderProducts(sorted);
+      // Apply brand filter
+      if (brand !== 'all') {
+        filtered = filtered.filter(p => p.brand === brand);
+      }
+
+      // Apply price filter
+      if (!isNaN(minPrice)) {
+        filtered = filtered.filter(p => p.price >= minPrice);
+      }
+
+      if (!isNaN(maxPrice)) {
+        filtered = filtered.filter(p => p.price <= maxPrice);
+      }
+
+      // Apply sorting
+      if (sortOrder === 'asc') {
+        filtered.sort((a, b) => a.price - b.price);
+      } else if (sortOrder === 'desc') {
+        filtered.sort((a, b) => b.price - a.price);
+      }
+
+      currentFiltered = filtered;
+      renderProducts(currentFiltered);
     }
 
     fetchProducts();
